@@ -3,6 +3,8 @@ class ProjectInput {
   hostElement: HTMLDivElement;
   _element: HTMLFormElement;
 
+  titleInput: HTMLInputElement; descriptionInput: HTMLInputElement; peopleInput: HTMLInputElement;
+
   constructor() {
     /* 
       Below, notice a couple things here:
@@ -19,13 +21,32 @@ class ProjectInput {
     */
     const importedNode = document.importNode(this.templateElement.content, true); // <template><form><form/></template>
     this._element = importedNode.firstElementChild! as HTMLFormElement; // <form/>
+    this._element.id = 'user-input'; // adding a new ID for css purposes
+    /*
+    Below is assigning the contents of the form inputs to this instance's properties
+    */
+    this.titleInput = this._element.querySelector('#title')! as HTMLInputElement; // querySelector instead of getElementById... for a node instead of document
+    this.descriptionInput = this._element.querySelector('#description')! as HTMLInputElement;
+    this.peopleInput = this._element.querySelector('#people')! as HTMLInputElement;
+   
     this.attach();
+    this.attachSubmitHandler();
   }
 
 
   private attach() {
     // inserts right after the opening tag of the hostElement
     this.hostElement.insertAdjacentElement('afterbegin', this._element);
+  }
+
+
+  private attachSubmitHandler() {
+    this._element.addEventListener('submit', this.submitHandler.bind(this));
+  }
+
+  private submitHandler(event: Event) {
+    event.preventDefault();
+    console.log(this.titleInput.value);
   }
 }
 
