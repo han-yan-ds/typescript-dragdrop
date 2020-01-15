@@ -1,0 +1,8 @@
+.decorator-use-case {
+  display: inline-block;
+  margin: 10px;
+  padding: 4px;
+  border: solid;
+  border-width: 1px;
+  border-color: black;
+}
