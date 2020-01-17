@@ -77,6 +77,8 @@ class ProjectInput {
   private submitHandler(event: Event) {
     event.preventDefault();
     const userInputs = this.gatherUserInput();
+    console.log(userInputs);
+    this.clearInputs();
   }
 
   private gatherUserInput(): [string, string, number] | void {
@@ -87,6 +89,12 @@ class ProjectInput {
       return allInputStrings;
     }
     return; // not all are occupied
+  }
+
+  private clearInputs(): void {
+    this.titleInput.value = '';
+    this.descriptionInput.value = '';
+    this.peopleInput.value = '';
   }
 }
 
