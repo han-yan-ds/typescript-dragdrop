@@ -1,3 +1,30 @@
+// import {AutoBind} from './autobind';
+function AutoBind(_target: any, _methodName: string, descriptor: PropertyDescriptor) {
+  const originalMethod = descriptor.value; // This is how I access the method ITSELF when decorating a method
+  const adjustedDescriptor: PropertyDescriptor = { // cloning the descriptor EXCEPT now it's an accessor descriptor instead of a method... has get instead of value
+    configurable: descriptor.configurable,
+    enumerable: descriptor.enumerable,
+    get() { // this is where the magic is: by calling the originalMethod, I'll actually call this getter INSTEAD, which gives me a Bound-Version of originalMethod instead
+      return originalMethod.bind(this);
+    }
+  }
+  return adjustedDescriptor;
+}
+
+
+// import as a utility
+function isInputOccupied(inpStr: string): boolean {
+  return (inpStr.trim().length !== 0);
+}
+
+function TransformFunctionToArrayFunc<T>(boolFunc: (x: T)=>boolean) { // only true if everything in the function is true... I can make an "OR" version later
+  return function(arr: T[]) {
+    return arr.reduce((endBool: boolean, item: T) => {
+      return endBool && boolFunc(item);
+    }, true);
+  }
+}
+
 class ProjectInput {
   templateElement: HTMLTemplateElement;
   hostElement: HTMLDivElement;
@@ -33,20 +60,31 @@ class ProjectInput {
     this.attachSubmitHandler();
   }
 
-
+  /* Attaching methods */
   private attach() {
     // inserts right after the opening tag of the hostElement
     this.hostElement.insertAdjacentElement('afterbegin', this._element);
   }
 
-
   private attachSubmitHandler() {
-    this._element.addEventListener('submit', this.submitHandler.bind(this));
+    this._element.addEventListener('submit', this.submitHandler);
   }
 
+  /* Button-Click methods */
+  @AutoBind
   private submitHandler(event: Event) {
     event.preventDefault();
-    console.log(this.titleInput.value);
+    const userInputs = this.gatherUserInput();
+  }
+
+  private gatherUserInput(): [string, string, number] | void {
+    const titleStr = this.titleInput.value;
+    const descriptionStr = this.descriptionInput.value;
+    const peopleStr = this.peopleInput.value;
+
+    const testAllInputsFunc = TransformFunctionToArrayFunc(isInputOccupied);
+    if (testAllInputsFunc([titleStr, descriptionStr, peopleStr])) return [titleStr, descriptionStr, +peopleStr];
+    return;
   }
 }
 
