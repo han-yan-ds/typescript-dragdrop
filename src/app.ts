@@ -17,7 +17,9 @@ function isInputOccupied(inpStr: string): boolean {
   return (inpStr.trim().length !== 0);
 }
 
-function TransformFunctionToArrayFunc<T>(boolFunc: (x: T)=>boolean) { // only true if everything in the function is true... I can make an "OR" version later
+function TransformFunctionToArrayFunc<T>(boolFunc: (x: T)=>boolean) {
+  // FANTASTIC CASE STUDY on using generic types in TypeScript!
+  // only true if boolFunc(each item in the array) is true... I can make an "OR" version later
   return function(arr: T[]) {
     return arr.reduce((endBool: boolean, item: T) => {
       return endBool && boolFunc(item);
