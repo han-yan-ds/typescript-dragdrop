@@ -80,13 +80,13 @@ class ProjectInput {
   }
 
   private gatherUserInput(): [string, string, number] | void {
-    const titleStr = this.titleInput.value;
-    const descriptionStr = this.descriptionInput.value;
-    const peopleStr = this.peopleInput.value;
-
-    const testAllInputsFunc = TransformFunctionToArrayFunc(isInputOccupied);
-    if (testAllInputsFunc([titleStr, descriptionStr, peopleStr])) return [titleStr, descriptionStr, +peopleStr];
-    return;
+    const allInputStrings: [string, string, any] = [this.titleInput.value, this.descriptionInput.value, this.peopleInput.value];
+    const testAllInputsOccupied: Function = TransformFunctionToArrayFunc(isInputOccupied);
+    if (testAllInputsOccupied(allInputStrings)) {
+      allInputStrings[2] = +allInputStrings[2]; // convert last string to number before returning
+      return allInputStrings;
+    }
+    return; // not all are occupied
   }
 }
 
