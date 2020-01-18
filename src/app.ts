@@ -78,7 +78,7 @@ class ProjectInput {
 
   private gatherUserInput(): [string, string, number] | void {
     const allInputStrings: [string, string, any] = [this.titleInput.value, this.descriptionInput.value, this.peopleInput.value];
-    if (allInputStrings.every(isInputOccupied)) {
+    if (allInputStrings.every(isInputOccupied)) { // validate everything in the array by calling Array.proto.every with a validation CB
       allInputStrings[2] = +allInputStrings[2]; // convert last string to number before returning
       return allInputStrings;
     }
