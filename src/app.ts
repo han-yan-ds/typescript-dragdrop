@@ -17,8 +17,39 @@ function AutoBind(_target: any, _methodName: string, descriptor: PropertyDescrip
 /* 
   import as a utility
 */
-function isInputOccupied(inpStr: string): boolean {
-  return (inpStr.trim().length !== 0);
+interface Validatable {
+  value: string | number;
+  isRequired?: boolean;
+}
+
+interface ValidatableString extends Validatable {
+  value: string;
+  minLength?: number;
+  maxLength?: number;
+}
+
+interface ValidatableNumber extends Validatable {
+  value: number;
+  min?: number;
+  max?: number;
+}
+
+function isValidatableString(field: Validatable): field is ValidatableString { // custom typeguard function return type, for TS error checking
+  // type guard; it's an instanceof for an interface... in spirit
+  return (typeof field.value === 'string');
+}
+
+function validate(field: ValidatableString | ValidatableNumber): boolean {
+  let isValidTotal = true;
+  if (field.isRequired) isValidTotal = isValidTotal && (field.value.toString().trim().length !== 0);
+  if (isValidatableString(field)) { // checks for strings
+    if (field.minLength != null) isValidTotal = isValidTotal && (field.value.trim().length >= field.minLength);
+    if (field.maxLength != null) isValidTotal = isValidTotal && (field.value.trim().length <= field.maxLength);  
+  } else { // checks for numbers
+    if (field.min != null) isValidTotal = isValidTotal && (+field.value >= field.min);
+    if (field.max != null) isValidTotal = isValidTotal && (+field.value <= field.max);
+  }
+  return isValidTotal;
 }
 
 
@@ -73,16 +104,31 @@ class ProjectInput {
     event.preventDefault();
     const userInputs = this.gatherUserInput();
     console.log(userInputs);
-    this.clearInputs();
   }
 
-  private gatherUserInput(): [string, string, number] | void {
-    const allInputStrings: [string, string, any] = [this.titleInput.value, this.descriptionInput.value, this.peopleInput.value];
-    if (allInputStrings.every(isInputOccupied)) {
-      allInputStrings[2] = +allInputStrings[2]; // convert last string to number before returning
-      return allInputStrings;
+  private gatherUserInput(): (string | number)[] | void {
+    let results;
+    const titleValidatableString: ValidatableString = {
+      value: this.titleInput.value,
+      isRequired: true,
+      minLength: 2,
     }
-    return; // not all are occupied
+    const descriptionValidatableString: ValidatableString = {
+      value: this.descriptionInput.value,
+      isRequired: true,
+      minLength: 5,
+    }
+    const peopleValidatableNumber: ValidatableNumber = {
+      value: +this.peopleInput.value,
+      isRequired: true,
+      min: 1,
+    }
+    const allInputsValidatable = [titleValidatableString, descriptionValidatableString, peopleValidatableNumber];
+    if (allInputsValidatable.every(validate)) {
+      results = allInputsValidatable.map((validatable) => validatable.value);
+      this.clearInputs();
+    }
+    return results; // not all are valid, results is undefined
   }
 
   private clearInputs(): void {
