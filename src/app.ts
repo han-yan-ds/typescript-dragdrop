@@ -1,4 +1,6 @@
-// import {AutoBind} from './autobind';
+/* 
+  import {AutoBind} from './autobind';
+*/
 function AutoBind(_target: any, _methodName: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value; // This is how I access the method ITSELF when decorating a method
   const adjustedDescriptor: PropertyDescriptor = { // cloning the descriptor EXCEPT now it's an accessor descriptor instead of a method... has get instead of value
@@ -12,20 +14,13 @@ function AutoBind(_target: any, _methodName: string, descriptor: PropertyDescrip
 }
 
 
-// import as a utility
+/* 
+  import as a utility
+*/
 function isInputOccupied(inpStr: string): boolean {
   return (inpStr.trim().length !== 0);
 }
 
-function TransformFunctionToArrayFunc<T>(boolFunc: (x: T)=>boolean) {
-  // FANTASTIC CASE STUDY on using generic types in TypeScript!
-  // only true if boolFunc(each item in the array) is true... I can make an "OR" version later
-  return function(arr: T[]) {
-    return arr.reduce((endBool: boolean, item: T) => {
-      return endBool && boolFunc(item);
-    }, true);
-  }
-}
 
 class ProjectInput {
   templateElement: HTMLTemplateElement;
@@ -83,8 +78,7 @@ class ProjectInput {
 
   private gatherUserInput(): [string, string, number] | void {
     const allInputStrings: [string, string, any] = [this.titleInput.value, this.descriptionInput.value, this.peopleInput.value];
-    const testAllInputsOccupied: Function = TransformFunctionToArrayFunc(isInputOccupied);
-    if (testAllInputsOccupied(allInputStrings)) {
+    if (allInputStrings.every(isInputOccupied)) {
       allInputStrings[2] = +allInputStrings[2]; // convert last string to number before returning
       return allInputStrings;
     }
