@@ -53,6 +53,9 @@ function validate(field: ValidatableString | ValidatableNumber): boolean {
 }
 
 
+/* 
+  ProjectInput class
+*/
 class ProjectInput {
   templateElement: HTMLTemplateElement;
   hostElement: HTMLDivElement;
@@ -138,4 +141,51 @@ class ProjectInput {
   }
 }
 
+
+/*
+  ProjectItem class
+*/
+// class ProjectItem {
+//   constructor() {}
+// }
+
+
+/* 
+  ProjectList class
+*/
+class ProjectList {
+  templateElement: HTMLTemplateElement;
+  hostElement: HTMLDivElement;
+  _element: HTMLElement;
+
+  constructor(private listName: 'pending' | 'started' | 'finished') { // I could make this more specific by only allowing certain strings, eg: "active" or "finished"
+   this.templateElement = document.getElementById('project-list')! as HTMLTemplateElement;
+   this.hostElement = document.getElementById('app')! as HTMLDivElement;
+
+   const importedNode = document.importNode(this.templateElement.content, true); // <template><section><section/></template>
+   this._element = importedNode.firstElementChild! as HTMLElement; // <section/>
+   this._element.id = `${listName}-projects`;
+   /*
+   Below is assigning the contents of the form inputs to this instance's properties
+   */
+    this.attach();
+    this.renderListSkeleton();
+  }
+
+  private renderListSkeleton() {
+    this._element.querySelector('ul')!.id = `${this.listName}-projects-list`;
+    this._element.querySelector('h2')!.textContent = `${this.listName.toUpperCase()} PROJECTS`;
+  }
+
+  private attach() {
+    // inserts right after the opening tag of the hostElement
+    this.hostElement.insertAdjacentElement('beforeend', this._element);
+  }
+}
+
+
+/*
+  Running the scripts
+*/
+const projectList = new ProjectList('pending');
 const projectInput = new ProjectInput();
