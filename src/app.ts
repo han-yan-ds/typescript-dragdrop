@@ -19,6 +19,21 @@ class Project{
 type Listener = (project: Project[]) => void;
 
 
+/*
+  Drag & Drop Interfaces (eventually refactor to use decorators?)
+*/
+interface Draggable {
+  dragStartHandler(event: DragEvent): void;
+  dragEndHandler(event: DragEvent): void;
+}
+
+interface Droppable {
+  dragOnHandler(event: DragEvent): void;
+  dragOffHandler(event: DragEvent): void;
+  dropHandler(event: DragEvent): void;
+}
+
+
 /**
   Project State Management
 */
