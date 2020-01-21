@@ -229,7 +229,17 @@ class ProjectList {
     this._element.id = `${listName}-projects`;
 
     projectState.addListener((projectsList: Project[]) => {
-      this._assignedProjects = projectsList;
+      const filteredProjects = projectsList.filter((proj) => {
+        switch (proj.status) {
+          case ProjectStatus.Pending:
+            return listName === 'pending';
+          case ProjectStatus.Active:
+            return listName === 'active';
+          case ProjectStatus.Finished:
+            return listName === 'finished';
+        }
+      })
+      this._assignedProjects = filteredProjects;
       this.renderProjects();
     });
    /*
@@ -241,6 +251,7 @@ class ProjectList {
 
   private renderProjects() {
     const listEle = document.getElementById(`${this.listName}-projects-list`)!;
+    listEle.innerHTML = ''; // clears out list contents before rerendering entire list
     this._assignedProjects.forEach((project) => {
       const listItem = document.createElement('li');
       listItem.textContent = project.title;
