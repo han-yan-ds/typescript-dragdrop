@@ -226,7 +226,7 @@ class ProjectInput extends Template<HTMLDivElement, HTMLFormElement> {
 class ProjectItem extends Template<HTMLLIElement, HTMLElement> {
   project: Project;
 
-  get workers() {
+  get people() {
     const num = this.project.numPeople;
     return (num === 1) ? `${num} person assigned` : `${num} people assigned`;
   }
@@ -252,7 +252,7 @@ class ProjectItem extends Template<HTMLLIElement, HTMLElement> {
 
   renderComponent() {
     this._element.querySelector('h2')!.textContent = this.project.title;
-    this._element.querySelector('h3')!.textContent = this.workers;
+    this._element.querySelector('h3')!.textContent = this.people;
     this._element.querySelector('p')!.textContent = this.project.description;
   }
 }
