@@ -109,50 +109,68 @@ function validate(field: ValidatableString | ValidatableNumber): boolean {
   return isValidTotal;
 }
 
-
-/* 
-  ProjectInput class
+/*
+  HTML Component/Template superclass
 */
-class ProjectInput {
+abstract class Template<H extends HTMLElement, E extends HTMLElement> {
   templateElement: HTMLTemplateElement;
-  hostElement: HTMLDivElement;
-  _element: HTMLFormElement;
+  hostElement: H;
+  _element: E;
 
-  titleInput: HTMLInputElement; descriptionInput: HTMLInputElement; peopleInput: HTMLInputElement;
-
-  constructor() {
+  constructor(
+    templateId: string, 
+    hostId: string, 
+    private insertPosition: 'beforebegin' | 'beforeend' | 'afterbegin' | 'afterend',
+    newElementId?: string
+    ) {
     /* 
       Below, notice a couple things here:
       1) I added "!" to tell TypeScript that this element cannot be null
       2) I casted it to an HTML___Element type, so that I can tell TS 
         that this.___Element will definitely have required properties
     */
-    this.templateElement = document.getElementById('project-input')! as HTMLTemplateElement;
-    this.hostElement = document.getElementById('input-section')! as HTMLDivElement;
+    this.templateElement = document.getElementById(templateId)! as HTMLTemplateElement;
+    this.hostElement = document.getElementById(hostId)! as H;
     /*
       Below, notice:
       1) document.importNode copies a node (and if true, its children)
       2) this._element is a copy of the node's child, which is a form that I want to copy and insert somewhere else
     */
     const importedNode = document.importNode(this.templateElement.content, true); // <template><form><form/></template>
-    this._element = importedNode.firstElementChild! as HTMLFormElement; // <form/>
-    this._element.id = 'user-input'; // adding a new ID for css purposes
+    this._element = importedNode.firstElementChild! as E; // <form/>
+    if (newElementId) this._element.id = newElementId; // adding a new ID for css purposes
+    
+    this.attach();
+  }
+
+  private attach() {
+    // inserts right after the opening tag of the hostElement
+    this.hostElement.insertAdjacentElement(this.insertPosition, this._element);
+  }
+
+  abstract renderComponent(): void;
+}
+
+
+/* 
+  ProjectInput class
+*/
+class ProjectInput extends Template<HTMLDivElement, HTMLFormElement> {
+  titleInput: HTMLInputElement; descriptionInput: HTMLInputElement; peopleInput: HTMLInputElement;
+
+  constructor() {
+    super('project-input', 'input-section', 'afterbegin', 'user-input');
     /*
-    Below is assigning the contents of the form inputs to this instance's properties
+      Below is assigning the contents of the form inputs to this instance's properties
     */
     this.titleInput = this._element.querySelector('#title')! as HTMLInputElement; // querySelector instead of getElementById... for a node instead of document
     this.descriptionInput = this._element.querySelector('#description')! as HTMLInputElement;
     this.peopleInput = this._element.querySelector('#people')! as HTMLInputElement;
    
-    this.attach();
     this.attachSubmitHandler();
   }
 
-  /* Attaching methods */
-  private attach() {
-    // inserts right after the opening tag of the hostElement
-    this.hostElement.insertAdjacentElement('afterbegin', this._element);
-  }
+  renderComponent() {} // to satisfy the abstract class requiring renderComponent()
 
   private attachSubmitHandler() {
     this._element.addEventListener('submit', this.submitHandler);
@@ -213,20 +231,12 @@ class ProjectInput {
 /* 
   ProjectList class
 */
-class ProjectList {
-  templateElement: HTMLTemplateElement;
-  hostElement: HTMLDivElement;
-  _element: HTMLElement;
+class ProjectList extends Template<HTMLDivElement, HTMLElement> {
   _assignedProjects: Project[];
 
   constructor(private listName: 'pending' | 'active' | 'finished') { // I could make this more specific by only allowing certain strings, eg: "active" or "finished"
+    super('project-list', 'project-list-section', 'beforeend', `${listName}-projects`);
     this._assignedProjects = [];
-    this.templateElement = document.getElementById('project-list')! as HTMLTemplateElement;
-    this.hostElement = document.getElementById('project-list-section')! as HTMLDivElement;
-
-    const importedNode = document.importNode(this.templateElement.content, true); // <template><section><section/></template>
-    this._element = importedNode.firstElementChild! as HTMLElement; // <section/>
-    this._element.id = `${listName}-projects`;
 
     projectState.addListener((projectsList: Project[]) => {
       const filteredProjects = projectsList.filter((proj) => {
@@ -242,11 +252,8 @@ class ProjectList {
       this._assignedProjects = filteredProjects;
       this.renderProjects();
     });
-   /*
-   Below is assigning the contents of the form inputs to this instance's properties
-   */
-    this.attach();
-    this.renderListSkeleton();
+    
+    this.renderComponent();
   }
 
   private renderProjects() {
@@ -259,14 +266,9 @@ class ProjectList {
     });
   }
 
-  private renderListSkeleton() {
+  renderComponent() {
     this._element.querySelector('ul')!.id = `${this.listName}-projects-list`;
     this._element.querySelector('h2')!.textContent = `${this.listName.toUpperCase()} PROJECTS`;
-  }
-
-  private attach() {
-    // inserts right after the opening tag of the hostElement
-    this.hostElement.insertAdjacentElement('beforeend', this._element);
   }
 }
 
