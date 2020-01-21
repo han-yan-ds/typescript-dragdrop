@@ -1,9 +1,30 @@
+/*
+  Project Object
+*/
+enum ProjectStatus { Pending, Active, Finished }
+
+class Project{
+  constructor(
+    public id: number,
+    public title: string,
+    public description: string,
+    public numPeople: number,
+    public status: ProjectStatus//enum
+    ) {}
+}
+
+/* 
+  Listener Object Type
+*/
+type Listener = (project: Project[]) => void;
+
+
 /**
   Project State Management
 */
 class ProjectState { // this is a singleton class, only 1 projectState can exist
-  private projects: any[] = [];
-  private listeners: any[] = [];
+  private projects: Project[] = [];
+  private listeners: Listener[] = [];
   private _id = 0;
 
   private static instance: ProjectState; // singleton (private static instance of itself)
@@ -16,17 +37,12 @@ class ProjectState { // this is a singleton class, only 1 projectState can exist
     return this.instance;
   }
 
-  addListener(listenerFunc: Function) {
+  addListener(listenerFunc: Listener) {
     this.listeners.push(listenerFunc);
   }
 
   addProject(title: string, description: string, numPeople: number) {
-    const newProject = {
-      id: this._id,
-      title,
-      description,
-      numPeople,
-    };
+    const newProject = new Project(this._id, title, description, numPeople, ProjectStatus.Pending); // enum
     this.projects.push(newProject);
     this.listeners.forEach((listenerFunc) => {
       // run a list of functions (listenerFunc) on each project
@@ -201,7 +217,7 @@ class ProjectList {
   templateElement: HTMLTemplateElement;
   hostElement: HTMLDivElement;
   _element: HTMLElement;
-  _assignedProjects: any[];
+  _assignedProjects: Project[];
 
   constructor(private listName: 'pending' | 'active' | 'finished') { // I could make this more specific by only allowing certain strings, eg: "active" or "finished"
     this._assignedProjects = [];
@@ -212,7 +228,7 @@ class ProjectList {
     this._element = importedNode.firstElementChild! as HTMLElement; // <section/>
     this._element.id = `${listName}-projects`;
 
-    projectState.addListener((projectsList: any[]) => {
+    projectState.addListener((projectsList: Project[]) => {
       this._assignedProjects = projectsList;
       this.renderProjects();
     });
