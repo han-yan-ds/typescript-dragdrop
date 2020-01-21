@@ -1,3 +1,44 @@
+/**
+  Project State Management
+*/
+class ProjectState { // this is a singleton class, only 1 projectState can exist
+  private projects: any[] = [];
+  private listeners: any[] = [];
+  private _id = 0;
+
+  private static instance: ProjectState; // singleton (private static instance of itself)
+
+  private constructor() {} // singleton (private constructor)
+
+  static getInstance() { // singleton (public getInstance)
+    if (this.instance) return this.instance;
+    this.instance = new ProjectState();
+    return this.instance;
+  }
+
+  addListener(listenerFunc: Function) {
+    this.listeners.push(listenerFunc);
+  }
+
+  addProject(title: string, description: string, numPeople: number) {
+    const newProject = {
+      id: this._id,
+      title,
+      description,
+      numPeople,
+    };
+    this.projects.push(newProject);
+    this.listeners.forEach((listenerFunc) => {
+      // run a list of functions (listenerFunc) on each project
+      listenerFunc([...this.projects]);
+    })
+    this._id++;
+  }
+}
+
+const projectState = ProjectState.getInstance();
+
+
 /* 
   import {AutoBind} from './autobind';
 */
@@ -106,7 +147,10 @@ class ProjectInput {
   private submitHandler(event: Event) {
     event.preventDefault();
     const userInputs = this.gatherUserInput();
-    console.log(userInputs);
+    if (userInputs) {
+      const [title, desc, people] = userInputs;
+      projectState.addProject(title as string, desc as string, people as number);
+    }
   }
 
   private gatherUserInput(): (string | number)[] | void {
@@ -157,19 +201,35 @@ class ProjectList {
   templateElement: HTMLTemplateElement;
   hostElement: HTMLDivElement;
   _element: HTMLElement;
+  _assignedProjects: any[];
 
   constructor(private listName: 'pending' | 'active' | 'finished') { // I could make this more specific by only allowing certain strings, eg: "active" or "finished"
-   this.templateElement = document.getElementById('project-list')! as HTMLTemplateElement;
-   this.hostElement = document.getElementById('project-list-section')! as HTMLDivElement;
+    this._assignedProjects = [];
+    this.templateElement = document.getElementById('project-list')! as HTMLTemplateElement;
+    this.hostElement = document.getElementById('project-list-section')! as HTMLDivElement;
 
-   const importedNode = document.importNode(this.templateElement.content, true); // <template><section><section/></template>
-   this._element = importedNode.firstElementChild! as HTMLElement; // <section/>
-   this._element.id = `${listName}-projects`;
+    const importedNode = document.importNode(this.templateElement.content, true); // <template><section><section/></template>
+    this._element = importedNode.firstElementChild! as HTMLElement; // <section/>
+    this._element.id = `${listName}-projects`;
+
+    projectState.addListener((projectsList: any[]) => {
+      this._assignedProjects = projectsList;
+      this.renderProjects();
+    });
    /*
    Below is assigning the contents of the form inputs to this instance's properties
    */
     this.attach();
     this.renderListSkeleton();
+  }
+
+  private renderProjects() {
+    const listEle = document.getElementById(`${this.listName}-projects-list`)!;
+    this._assignedProjects.forEach((project) => {
+      const listItem = document.createElement('li');
+      listItem.textContent = project.title;
+      listEle.appendChild(listItem);
+    });
   }
 
   private renderListSkeleton() {
