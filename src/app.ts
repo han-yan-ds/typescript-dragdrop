@@ -71,7 +71,7 @@ class ProjectInput {
         that this.___Element will definitely have required properties
     */
     this.templateElement = document.getElementById('project-input')! as HTMLTemplateElement;
-    this.hostElement = document.getElementById('app')! as HTMLDivElement;
+    this.hostElement = document.getElementById('input-section')! as HTMLDivElement;
     /*
       Below, notice:
       1) document.importNode copies a node (and if true, its children)
@@ -158,9 +158,9 @@ class ProjectList {
   hostElement: HTMLDivElement;
   _element: HTMLElement;
 
-  constructor(private listName: 'pending' | 'started' | 'finished') { // I could make this more specific by only allowing certain strings, eg: "active" or "finished"
+  constructor(private listName: 'pending' | 'active' | 'finished') { // I could make this more specific by only allowing certain strings, eg: "active" or "finished"
    this.templateElement = document.getElementById('project-list')! as HTMLTemplateElement;
-   this.hostElement = document.getElementById('app')! as HTMLDivElement;
+   this.hostElement = document.getElementById('project-list-section')! as HTMLDivElement;
 
    const importedNode = document.importNode(this.templateElement.content, true); // <template><section><section/></template>
    this._element = importedNode.firstElementChild! as HTMLElement; // <section/>
@@ -187,5 +187,7 @@ class ProjectList {
 /*
   Running the scripts
 */
-const projectList = new ProjectList('pending');
+const pendingProjectList = new ProjectList('pending');
+const activeProjectList = new ProjectList('active');
+const finishedProjectList = new ProjectList('finished');
 const projectInput = new ProjectInput();
