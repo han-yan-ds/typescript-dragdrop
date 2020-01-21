@@ -223,9 +223,34 @@ class ProjectInput extends Template<HTMLDivElement, HTMLFormElement> {
 /*
   ProjectItem class
 */
-// class ProjectItem {
-//   constructor() {}
-// }
+class ProjectItem extends Template<HTMLLIElement, HTMLElement> {
+  project: Project;
+
+  constructor(proj: Project) {
+    let status;
+    switch (proj.status) {
+      case ProjectStatus.Pending:
+        status = 'pending';
+        break;
+      case ProjectStatus.Active:
+        status = 'active';
+        break;
+      case ProjectStatus.Finished:
+        status = 'finished';
+        break;
+    }
+    super('single-project', `${status}-projects-list`, "beforeend", `project-#${proj.id}`);
+    this.project = proj;
+
+    this.renderComponent();
+  }
+
+  renderComponent() {
+    this._element.querySelector('h2')!.textContent = this.project.title;
+    this._element.querySelector('h4')!.textContent = `${this.project.numPeople}`;
+    this._element.querySelector('p')!.textContent = this.project.description;
+  }
+}
 
 
 /* 
@@ -260,9 +285,8 @@ class ProjectList extends Template<HTMLDivElement, HTMLElement> {
     const listEle = document.getElementById(`${this.listName}-projects-list`)!;
     listEle.innerHTML = ''; // clears out list contents before rerendering entire list
     this._assignedProjects.forEach((project) => {
-      const listItem = document.createElement('li');
-      listItem.textContent = project.title;
-      listEle.appendChild(listItem);
+      const renderedProject = new ProjectItem(project);
+      renderedProject.renderComponent();
     });
   }
 
