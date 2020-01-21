@@ -58,6 +58,7 @@ button:active {
 .projects {
   margin: 1rem;
   border: 1px solid #ff0062;
+  flex-grow: 1;
 }
 
 .projects header {
@@ -68,12 +69,26 @@ button:active {
   align-items: center;
 }
 
+#project-list-section {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
 #finished-projects {
   border-color: #0044ff;
 }
 
 #finished-projects header {
   background: #0044ff;
+}
+
+#active-projects {
+  border-color: limegreen;
+}
+
+#active-projects header {
+  background: limegreen;
 }
 
 .projects h2 {
@@ -100,6 +115,10 @@ button:active {
 
 #finished-projects li h2 {
   color: #0044ff;
+}
+
+#active-projects li h2 {
+  color: limegreen;
 }
 
 .projects li h3 {
