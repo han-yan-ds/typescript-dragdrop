@@ -1,7 +1,7 @@
 /**
  * HTML Templates
  */
-namespace Templates {
+namespace App {
   export abstract class Template<H extends HTMLElement, E extends HTMLElement> {
     templateElement: HTMLTemplateElement;
     hostElement: H;
