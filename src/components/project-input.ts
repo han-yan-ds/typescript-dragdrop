@@ -56,6 +56,8 @@ namespace App {
       if (allInputsValidatable.every(Validation.validate)) {
         results = allInputsValidatable.map((validatable) => validatable.value);
         this.clearInputs();
+      } else {
+        alert("Title must be at least 2 characters\nDescription must be at least 5 characters\nNumber of People must be positive")
       }
       return results; // not all are valid, results is undefined
     }
