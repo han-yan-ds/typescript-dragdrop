@@ -1,3 +1,11 @@
+/**
+ * Importing namespaces
+ */
+/// <reference path='./drag-drop.ts'/> 
+/// <reference path='./decorators.ts'/>
+/// <reference path='./validation.ts'/>
+/// <reference path='./templates.ts'/>
+
 /*
   Project Object
 */
@@ -18,22 +26,6 @@ class Project{
 */
 type Listener = (project: Project[]) => void;
 
-
-/*
-  Drag & Drop Interfaces (eventually refactor to use decorators?)
-*/
-interface Draggable {
-  attachDraggableHandler(): void;
-  dragStartHandler(event: DragEvent): void;
-  dragEndHandler(event: DragEvent): void;
-}
-
-interface Droppable {
-  attachDroppableHandler(): void;
-  dragOnHandler(event: DragEvent): void;
-  dragOffHandler(event: DragEvent): void;
-  dropHandler(event: DragEvent): void;
-}
 
 
 /**
@@ -73,6 +65,14 @@ class ProjectState { // this is a singleton class, only 1 projectState can exist
     }
   }
 
+  // deleteProject(projId: number) {
+  //   const targetProjectIndex = this.projects.findIndex((project) => project.id === projId);
+  //   if (targetProjectIndex !== -1) {
+  //     this.projects.splice(targetProjectIndex, 1);
+  //     this.updateListeners();
+  //   }
+  // }
+
   private updateListeners() {
     this.listeners.forEach((listenerFunc) => {
       // run a list of functions (listenerFunc) on each project
@@ -84,107 +84,11 @@ class ProjectState { // this is a singleton class, only 1 projectState can exist
 const projectState = ProjectState.getInstance();
 
 
-/* 
-  import {AutoBind} from './autobind';
-*/
-function AutoBind(_target: any, _methodName: string, descriptor: PropertyDescriptor) {
-  const originalMethod = descriptor.value; // This is how I access the method ITSELF when decorating a method
-  const adjustedDescriptor: PropertyDescriptor = { // cloning the descriptor EXCEPT now it's an accessor descriptor instead of a method... has get instead of value
-    configurable: descriptor.configurable,
-    enumerable: descriptor.enumerable,
-    get() { // this is where the magic is: by calling the originalMethod, I'll actually call this getter INSTEAD, which gives me a Bound-Version of originalMethod instead
-      return originalMethod.bind(this);
-    }
-  }
-  return adjustedDescriptor;
-}
-
-
-/* 
-  import as a utility
-*/
-interface Validatable {
-  value: string | number;
-  isRequired?: boolean;
-}
-
-interface ValidatableString extends Validatable {
-  value: string;
-  minLength?: number;
-  maxLength?: number;
-}
-
-interface ValidatableNumber extends Validatable {
-  value: number;
-  min?: number;
-  max?: number;
-}
-
-function isValidatableString(field: Validatable): field is ValidatableString { // custom typeguard function return type, for TS error checking
-  // type guard; it's an instanceof for an interface... in spirit
-  return (typeof field.value === 'string');
-}
-
-function validate(field: ValidatableString | ValidatableNumber): boolean {
-  let isValidTotal = true;
-  if (field.isRequired) isValidTotal = isValidTotal && (field.value.toString().trim().length !== 0);
-  if (isValidatableString(field)) { // checks for strings
-    if (field.minLength != null) isValidTotal = isValidTotal && (field.value.trim().length >= field.minLength);
-    if (field.maxLength != null) isValidTotal = isValidTotal && (field.value.trim().length <= field.maxLength);  
-  } else { // checks for numbers
-    if (field.min != null) isValidTotal = isValidTotal && (+field.value >= field.min);
-    if (field.max != null) isValidTotal = isValidTotal && (+field.value <= field.max);
-  }
-  return isValidTotal;
-}
-
-/*
-  HTML Component/Template superclass
-*/
-abstract class Template<H extends HTMLElement, E extends HTMLElement> {
-  templateElement: HTMLTemplateElement;
-  hostElement: H;
-  _element: E;
-
-  constructor(
-    templateId: string, 
-    hostId: string, 
-    private insertPosition: 'beforebegin' | 'beforeend' | 'afterbegin' | 'afterend',
-    newElementId?: string
-    ) {
-    /* 
-      Below, notice a couple things here:
-      1) I added "!" to tell TypeScript that this element cannot be null
-      2) I casted it to an HTML___Element type, so that I can tell TS 
-        that this.___Element will definitely have required properties
-    */
-    this.templateElement = document.getElementById(templateId)! as HTMLTemplateElement;
-    this.hostElement = document.getElementById(hostId)! as H;
-    /*
-      Below, notice:
-      1) document.importNode copies a node (and if true, its children)
-      2) this._element is a copy of the node's child, which is a form that I want to copy and insert somewhere else
-    */
-    const importedNode = document.importNode(this.templateElement.content, true); // <template><form><form/></template>
-    this._element = importedNode.firstElementChild! as E; // <form/>
-    if (newElementId) this._element.id = newElementId; // adding a new ID for css purposes
-    
-    this.attach();
-  }
-
-  private attach() {
-    // inserts right after the opening tag of the hostElement
-    this.hostElement.insertAdjacentElement(this.insertPosition, this._element);
-  }
-
-  abstract renderComponent(): void;
-}
-
 
 /* 
   ProjectInput class
 */
-class ProjectInput extends Template<HTMLDivElement, HTMLFormElement> {
+class ProjectInput extends Templates.Template<HTMLDivElement, HTMLFormElement> {
   titleInput: HTMLInputElement; descriptionInput: HTMLInputElement; peopleInput: HTMLInputElement;
 
   constructor() {
@@ -206,7 +110,7 @@ class ProjectInput extends Template<HTMLDivElement, HTMLFormElement> {
   }
 
   /* Button-Click methods */
-  @AutoBind
+  @Decorators.AutoBind
   private submitHandler(event: Event) {
     event.preventDefault();
     const userInputs = this.gatherUserInput();
@@ -218,23 +122,23 @@ class ProjectInput extends Template<HTMLDivElement, HTMLFormElement> {
 
   private gatherUserInput(): (string | number)[] | void {
     let results;
-    const titleValidatableString: ValidatableString = {
+    const titleValidatableString: Validation.ValidatableString = {
       value: this.titleInput.value,
       isRequired: true,
       minLength: 2,
     }
-    const descriptionValidatableString: ValidatableString = {
+    const descriptionValidatableString: Validation.ValidatableString = {
       value: this.descriptionInput.value,
       isRequired: true,
       minLength: 5,
     }
-    const peopleValidatableNumber: ValidatableNumber = {
+    const peopleValidatableNumber: Validation.ValidatableNumber = {
       value: +this.peopleInput.value,
       isRequired: true,
       min: 1,
     }
     const allInputsValidatable = [titleValidatableString, descriptionValidatableString, peopleValidatableNumber];
-    if (allInputsValidatable.every(validate)) {
+    if (allInputsValidatable.every(Validation.validate)) {
       results = allInputsValidatable.map((validatable) => validatable.value);
       this.clearInputs();
     }
@@ -252,7 +156,7 @@ class ProjectInput extends Template<HTMLDivElement, HTMLFormElement> {
 /*
   ProjectItem class
 */
-class ProjectItem extends Template<HTMLLIElement, HTMLElement> implements Draggable {
+class ProjectItem extends Templates.Template<HTMLLIElement, HTMLElement> implements DragDrop.Draggable {
   project: Project;
 
   get people() {
@@ -295,7 +199,7 @@ class ProjectItem extends Template<HTMLLIElement, HTMLElement> implements Dragga
     this._element.addEventListener('dragend', this.dragEndHandler);
   }
 
-  @AutoBind
+  @Decorators.AutoBind
   dragStartHandler(event: DragEvent) {
     event.dataTransfer!.setData('text/plain', this.project.id.toString()); // attaching data TO this DragEvent
     event.dataTransfer!.effectAllowed = 'move';
@@ -308,7 +212,7 @@ class ProjectItem extends Template<HTMLLIElement, HTMLElement> implements Dragga
 /* 
   ProjectList class
 */
-class ProjectList extends Template<HTMLDivElement, HTMLElement> implements Droppable {
+class ProjectList extends Templates.Template<HTMLDivElement, HTMLElement> implements DragDrop.Droppable {
   _assignedProjects: Project[];
 
   constructor(private listName: 'pending' | 'active' | 'finished') { // I could make this more specific by only allowing certain strings, eg: "active" or "finished"
@@ -358,7 +262,7 @@ class ProjectList extends Template<HTMLDivElement, HTMLElement> implements Dropp
     this._element.addEventListener('drop', this.dropHandler);
   }
 
-  @AutoBind
+  @Decorators.AutoBind
   dragOnHandler(event: DragEvent) {
     if (event.dataTransfer && event.dataTransfer.types[0] === 'text/plain') { // limiting to only drags of 'text/plain' format
       event.preventDefault();
@@ -366,12 +270,12 @@ class ProjectList extends Template<HTMLDivElement, HTMLElement> implements Dropp
     }
   }
 
-  @AutoBind
+  @Decorators.AutoBind
   dragOffHandler(_event: DragEvent) {
     this._element!.classList.remove('droppable');
   }
 
-  @AutoBind
+  @Decorators.AutoBind
   dropHandler(event: DragEvent) {
     const projectId = Number(event.dataTransfer?.getData('text/plain'));
     let status;
@@ -387,6 +291,8 @@ class ProjectList extends Template<HTMLDivElement, HTMLElement> implements Dropp
         break;
     }
     projectState.moveProject(projectId, status);
+    
+    this.dragOffHandler(event);
   }
 }
 

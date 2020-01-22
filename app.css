@@ -55,10 +55,16 @@ button:active {
   border-color: #a80041;
 }
 
+.close {
+  color: red;
+  text-align: right;
+}
+
 .projects {
   margin: 1rem;
   border: 1px solid #ff0062;
   flex-grow: 1;
+  min-width: 300px;
 }
 
 .projects header {
@@ -93,6 +99,8 @@ button:active {
 
 .projects h2 {
   margin: 0;
+  padding: 5px;
+  text-align: center;
   color: white;
 }
 
@@ -148,4 +156,9 @@ button:active {
   padding: 1rem;
   border: 1px solid #ff0062;
   background: #f7f7f7;
+}
+
+#app {
+  min-height: 80vh;
+  display: flex;
 }
