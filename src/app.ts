@@ -23,11 +23,13 @@ type Listener = (project: Project[]) => void;
   Drag & Drop Interfaces (eventually refactor to use decorators?)
 */
 interface Draggable {
+  attachDraggableHandler(): void;
   dragStartHandler(event: DragEvent): void;
   dragEndHandler(event: DragEvent): void;
 }
 
 interface Droppable {
+  attachDroppableHandler(): void;
   dragOnHandler(event: DragEvent): void;
   dragOffHandler(event: DragEvent): void;
   dropHandler(event: DragEvent): void;
@@ -59,11 +61,23 @@ class ProjectState { // this is a singleton class, only 1 projectState can exist
   addProject(title: string, description: string, numPeople: number) {
     const newProject = new Project(this._id, title, description, numPeople, ProjectStatus.Pending); // enum
     this.projects.push(newProject);
+    this.updateListeners();
+    this._id++;
+  }
+
+  moveProject(projId: number, newStatus: ProjectStatus) {
+    const targetProject = this.projects.find((project) => project.id === projId);
+    if (targetProject) {
+      targetProject.status = newStatus;
+      this.updateListeners();
+    }
+  }
+
+  private updateListeners() {
     this.listeners.forEach((listenerFunc) => {
       // run a list of functions (listenerFunc) on each project
       listenerFunc([...this.projects]);
     })
-    this._id++;
   }
 }
 
@@ -238,7 +252,7 @@ class ProjectInput extends Template<HTMLDivElement, HTMLFormElement> {
 /*
   ProjectItem class
 */
-class ProjectItem extends Template<HTMLLIElement, HTMLElement> {
+class ProjectItem extends Template<HTMLLIElement, HTMLElement> implements Draggable {
   project: Project;
 
   get people() {
@@ -263,6 +277,8 @@ class ProjectItem extends Template<HTMLLIElement, HTMLElement> {
     this.project = proj;
 
     this.renderComponent();
+
+    this.attachDraggableHandler();
   }
 
   renderComponent() {
@@ -270,13 +286,29 @@ class ProjectItem extends Template<HTMLLIElement, HTMLElement> {
     this._element.querySelector('h3')!.textContent = this.people;
     this._element.querySelector('p')!.textContent = this.project.description;
   }
+
+  /*
+    Drag handling code
+  */
+  attachDraggableHandler() {
+    this._element.addEventListener('dragstart', this.dragStartHandler);
+    this._element.addEventListener('dragend', this.dragEndHandler);
+  }
+
+  @AutoBind
+  dragStartHandler(event: DragEvent) {
+    event.dataTransfer!.setData('text/plain', this.project.id.toString()); // attaching data TO this DragEvent
+    event.dataTransfer!.effectAllowed = 'move';
+  }
+
+  dragEndHandler(_event: DragEvent) {}
 }
 
 
 /* 
   ProjectList class
 */
-class ProjectList extends Template<HTMLDivElement, HTMLElement> {
+class ProjectList extends Template<HTMLDivElement, HTMLElement> implements Droppable {
   _assignedProjects: Project[];
 
   constructor(private listName: 'pending' | 'active' | 'finished') { // I could make this more specific by only allowing certain strings, eg: "active" or "finished"
@@ -296,6 +328,8 @@ class ProjectList extends Template<HTMLDivElement, HTMLElement> {
       })
       this._assignedProjects = filteredProjects;
       this.renderProjects();
+
+      this.attachDroppableHandler();
     });
     
     this.renderComponent();
@@ -313,6 +347,46 @@ class ProjectList extends Template<HTMLDivElement, HTMLElement> {
   renderComponent() {
     this._element.querySelector('ul')!.id = `${this.listName}-projects-list`;
     this._element.querySelector('h2')!.textContent = `${this.listName.toUpperCase()} PROJECTS`;
+  }
+
+  /*
+    Drop handling code
+  */
+  attachDroppableHandler() {
+    this._element.addEventListener('dragover', this.dragOnHandler);
+    this._element.addEventListener('dragleave', this.dragOffHandler);
+    this._element.addEventListener('drop', this.dropHandler);
+  }
+
+  @AutoBind
+  dragOnHandler(event: DragEvent) {
+    if (event.dataTransfer && event.dataTransfer.types[0] === 'text/plain') { // limiting to only drags of 'text/plain' format
+      event.preventDefault();
+      this._element!.classList.add('droppable');
+    }
+  }
+
+  @AutoBind
+  dragOffHandler(_event: DragEvent) {
+    this._element!.classList.remove('droppable');
+  }
+
+  @AutoBind
+  dropHandler(event: DragEvent) {
+    const projectId = Number(event.dataTransfer?.getData('text/plain'));
+    let status;
+    switch (this.listName) {
+      case 'active':
+        status = ProjectStatus.Active;
+        break;
+      case 'pending':
+        status = ProjectStatus.Pending;
+        break;
+      case 'finished':
+        status = ProjectStatus.Finished;
+        break;
+    }
+    projectState.moveProject(projectId, status);
   }
 }
 
